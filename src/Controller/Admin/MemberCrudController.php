@@ -4,6 +4,9 @@ namespace App\Controller\Admin;
 
 use App\Entity\Member;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 
 class MemberCrudController extends AbstractCrudController
 {
@@ -12,14 +15,14 @@ class MemberCrudController extends AbstractCrudController
         return Member::class;
     }
 
-    /*
     public function configureFields(string $pageName): iterable
     {
         return [
             IdField::new('id'),
-            TextField::new('title'),
-            TextEditorField::new('description'),
+            DateTimeField::new('created')->onlyOnDetail(),
+            AssociationField::new('createdBy')->hideOnForm(),
+            DateTimeField::new('updated')->onlyOnDetail(),
+            AssociationField::new('updatedBy')->hideOnForm(),
         ];
     }
-    */
 }
