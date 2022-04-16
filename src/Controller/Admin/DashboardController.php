@@ -53,8 +53,9 @@ class DashboardController extends AbstractDashboardController
     public function configureDashboard(): Dashboard
     {
         return Dashboard::new()
-            ->setTitle('Mankoo app')
+            ->setTitle('<img src="/img/logo.png" class="w-25"> Mankoo <span class="small">app</span>')
             ->generateRelativeUrls()
+            ->setFaviconPath('/favicon.png')
         ;
     }
 
