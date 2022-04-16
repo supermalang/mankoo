@@ -24,8 +24,8 @@ class EasyAdminSubscriber implements EventSubscriberInterface
                 ['setCreatedByUser', 20],
             ],
             BeforeEntityUpdatedEvent::class => [
-                ['setModifiedTime', 20],
-                ['setModifiedByUser', 15],
+                ['setUpdatedTime', 20],
+                ['setUpdatedByUser', 15],
             ],
         ];
     }

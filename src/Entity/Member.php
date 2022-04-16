@@ -4,8 +4,21 @@ namespace App\Entity;
 
 use App\Repository\MemberRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: MemberRepository::class)]
+#[UniqueEntity(
+    fields: ['telephone1'],
+    errorPath: 'telephone1',
+    message: 'The {{ label }} given {{ value }} is already used for another member.',
+    repositoryMethod: 'findByTelephone',
+)]
+#[UniqueEntity(
+    fields: ['telephone2'],
+    errorPath: 'telephone2',
+    message: 'The {{ label }} given {{ value }} is already used for another member.',
+    repositoryMethod: 'findByTelephone',
+)]
 class Member
 {
     #[ORM\Id]
@@ -32,10 +45,10 @@ class Member
     private $address;
 
     #[ORM\Column(type: 'boolean')]
-    private $isTreasurer;
+    private $isTreasurer = false;
 
     #[ORM\Column(type: 'boolean')]
-    private $isPresident;
+    private $isPresident = false;
 
     #[ORM\ManyToOne(targetEntity: Section::class)]
     private $section;
@@ -52,6 +65,11 @@ class Member
 
     #[ORM\ManyToOne(targetEntity: Admin::class)]
     private $updatedBy;
+
+    public function __toString()
+    {
+        return $this->firstName.' '.$this->lastName;
+    }
 
     public function getId(): ?int
     {

@@ -9,8 +9,8 @@ use Doctrine\ORM\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @method Member|null find($id, $lockMode = null, $lockVersion = null)
- * @method Member|null findOneBy(array $criteria, array $orderBy = null)
+ * @method null|Member find($id, $lockMode = null, $lockVersion = null)
+ * @method null|Member findOneBy(array $criteria, array $orderBy = null)
  * @method Member[]    findAll()
  * @method Member[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
@@ -48,19 +48,27 @@ class MemberRepository extends ServiceEntityRepository
     // /**
     //  * @return Member[] Returns an array of Member objects
     //  */
-    /*
-    public function findByExampleField($value)
+    public function findByTelephone(array $criteria)
     {
-        return $this->createQueryBuilder('m')
-            ->andWhere('m.exampleField = :val')
-            ->setParameter('val', $value)
+        $qb = $this->createQueryBuilder('m');
+
+        if (isset($criteria['telephone1'])) {
+            $qb->andWhere('m.telephone1 = :telephone')
+                ->setParameter('telephone', $criteria['telephone1'])
+            ;
+        } else {
+            $qb->andWhere('m.telephone2 = :telephone')
+                ->setParameter('telephone', $criteria['telephone2'])
+            ;
+        }
+
+        return $qb
             ->orderBy('m.id', 'ASC')
             ->setMaxResults(10)
             ->getQuery()
             ->getResult()
         ;
     }
-    */
 
     /*
     public function findOneBySomeField($value): ?Member
