@@ -22,8 +22,15 @@ class MemberCrudController extends AbstractCrudController
 
     public function configureActions(Actions $actions): Actions
     {
+        $exportMembers = Action::new('exportMembers', 'Export Members', 'fa fa-file-invoice')
+            ->displayAsButton()
+            ->setHtmlAttributes(['target' => '_blank'])
+            ->linkToUrl('google.com')
+        ;
+
         return $actions
             ->disable(Action::DELETE)
+            ->addBatchAction($exportMembers)
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->remove(Crud::PAGE_INDEX, Action::EDIT)
         ;

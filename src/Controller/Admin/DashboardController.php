@@ -61,14 +61,21 @@ class DashboardController extends AbstractDashboardController
 
     public function configureMenuItems(): iterable
     {
-        yield MenuItem::linkToDashboard('Dashboard', 'fa fa-home');
+        yield MenuItem::linkToDashboard('Dashboard', 'fa-solid fa-gauge-high');
 
-        yield MenuItem::linkToCrud('Members', 'fa fa-question-circle', Member::class);
+        yield MenuItem::subMenu('Members', 'fa-solid fa-people-carry-box')->setSubItems([
+            MenuItem::linkToCrud('Members', 'fa-solid fa-people-group', Member::class),
+            MenuItem::linktoRoute('Import Members', 'fa-solid fa-upload', 'app_import_member'),
+        ]);
 
-        yield MenuItem::linkToCrud('Membership fees', 'fas fa-comments', Membership::class);
+        // yield MenuItem::linktoRoute('Stats', 'fa fa-chart-bar', 'app_import_member');
 
-        yield MenuItem::linkToCrud('Sections', 'fas fa-folder', Section::class);
+        yield MenuItem::linkToCrud('Contributions', 'fa-solid fa-sack-dollar', Membership::class);
 
-        yield MenuItem::linkToCrud('Users', 'fas fa-users', Admin::class);
+        yield MenuItem::linkToCrud('Sections', 'fa-solid fa-sitemap', Section::class);
+
+        yield MenuItem::section('Advanced');
+
+        yield MenuItem::linkToCrud('Users', 'fa-solid fa-user-gear', Admin::class);
     }
 }
