@@ -1,0 +1,57 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %} {{ page_name|default('Import file') }} {% endblock %}
+
+{% block main %}
+    <p class="text-primary fs-5 text-secondary">You can import contacts from an Excel spreadsheet or comma separated values file.</p>
+    <table class='table table-hover table-bordered align-middle rounded-3 shadow'>
+        <thead>
+            <tr>
+                <th>First Name <i class='fa-solid fa-star text-danger' style='font-size:6px!important;position:relative;top:-5px;'></i> </th>
+                <th>Last Name</th>
+                <th>Telephone 1 <i class='fa-solid fa-star text-danger' style='font-size:6px!important;position:relative;top:-5px;'></i></th>
+                <th>Telephone 2</th>
+                <th>Address</th>
+                <th>Section</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Nogaye Alboury</td>
+                <td>Damel</td>
+                <td>+221 70 123 45 67</td>
+                <td>75 123 45 67</td>
+                <td>Sebikotane</td>
+                <td>Diamniadio</td>
+            </tr>
+            <tr>
+                <td>Alphonse</td>
+                <td>Diakhate</td>
+                <td>76 123 45 67</td>
+                <td></td>
+                <td>Sikilo</td>
+                <td>Kolda</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p class="text-primary fs-5">You can download this <a href="/templates/sample_import_members.xlsx" download>Excel template</a> as a sample. Imports files can contain a maximum of 10,000 records.</p>
+
+    {{ form_start(form) }}
+        <div class="text-danger">
+            {{ form_errors(form) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(form.importmembers) }}<br/>
+            {{ form_widget(form.importmembers) }}
+
+            <p>{{ form_help(form.importmembers, {'attr': {'class': 'text-danger'}}) }}</p>
+
+            <div class="form-error">
+                {{ form_errors(form.importmembers) }}
+            </div>
+        </div>
+    {{ form_rest(form) }}
+    {{ form_end(form) }}
+{% endblock %}

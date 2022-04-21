@@ -65,10 +65,8 @@ class DashboardController extends AbstractDashboardController
 
         yield MenuItem::subMenu('Members', 'fa-solid fa-people-carry-box')->setSubItems([
             MenuItem::linkToCrud('Members', 'fa-solid fa-people-group', Member::class),
-            MenuItem::linktoRoute('Import Members', 'fa-solid fa-upload', 'app_import_member'),
+            MenuItem::linktoRoute('Import Members', 'fa-solid fa-upload', 'app_members_importfile'),
         ]);
-
-        // yield MenuItem::linktoRoute('Stats', 'fa fa-chart-bar', 'app_import_member');
 
         yield MenuItem::linkToCrud('Contributions', 'fa-solid fa-sack-dollar', Membership::class);
 

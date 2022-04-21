@@ -1,0 +1,11 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %} {{ page_name|default('Members import') }} {% endblock %}
+
+{% block main %}
+    <div class='bg-body p-5 rounded shadow'>
+        <p class='fs-4'><i class="fa-solid fa-check text-success"></i> {{nbMembersCreated}} members imported</p>
+        <p>Members Updated</p>
+    </div>
+{% endblock %}
+
