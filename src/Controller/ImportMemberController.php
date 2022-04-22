@@ -18,6 +18,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Security;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use WorksheetReadFilter;
 
 define('MAX_ROWS_TO_LOAD', 10000);
@@ -93,6 +94,7 @@ class ImportMemberController extends AbstractController
 
         $cancelUrl = $this->adminUrlGenerator
             ->setController(MemberCrudController::class)
+            ->set('todelete', $importedFile)
             ->generateUrl()
             ;
 
@@ -105,7 +107,7 @@ class ImportMemberController extends AbstractController
     }
 
     #[Route('/admin/persistimportedfile', name: 'app_members_importmembers_persist')]
-    public function persistImportedMembersAction(Request $request, SpreadsheetHelper $sprdHelper, StringHelper $strngHelper, ManagerRegistry $doctrine)
+    public function persistImportedMembersAction(Request $request, SpreadsheetHelper $sprdHelper, StringHelper $strngHelper, ManagerRegistry $doctrine, ValidatorInterface $validator)
     {
         $uploadedMemberFileDir = $this->getParameter('importmembers_directory');
         $importedFile = $request->query->all()['importedFile'];
@@ -145,13 +147,18 @@ class ImportMemberController extends AbstractController
         }
 
         $em = $doctrine->getManager();
-        // Create entities
+        $entityValidationErrors = [];
+        $nbEntitiesCreated = 0;
+        $nbEntitiesUpdated = 0;
+
+        // Create or update entities
         foreach ($data['columnValues'] as $rowkey => $row) {
             $member = new Member();
 
             foreach ($row as $colkey => $col) {
                 $colname = $data['entityPropertyMap'][$colkey];
                 $setter = 'set'.ucfirst($colname);
+
                 if ('section' === $colname) {
                     $section = $em->getRepository(Section::class)->findOneBy(['label' => $col]);
 
@@ -161,6 +168,7 @@ class ImportMemberController extends AbstractController
 
                     continue;
                 }
+
                 $member->{$setter}($col);
 
                 if (method_exists($member, 'setCreated')) {
@@ -171,7 +179,56 @@ class ImportMemberController extends AbstractController
                     $member->setCreatedBy($this->security->getUser());
                 }
             }
+
             $em->persist($member);
+
+            $errors = $validator->validate($member);
+
+            // If there are no errors, increase the counter of entities created
+            $nbEntitiesCreated = count($errors) > 0 ? $nbEntitiesCreated : $nbEntitiesCreated + 1;
+
+            // If there are validation errors:
+            // 1. Check whether we need to update an existing entity
+            // 2. If not, add them to the array of errors, to be displayed later
+            foreach ($errors as $key => $error) {
+                $em->detach($member);
+                $propertyPath = $error->getPropertyPath();
+
+                // Check if the error is happening because of an entity that already exists (unique constraint, etc.)
+                $existing_entity = $em->getRepository(Member::class)->findOneBy([$propertyPath => $error->getInvalidValue()]);
+
+                // The entity already exists, so we need to update the existing entity
+                if ($existing_entity && !null == $error->getInvalidValue()) {
+                    $createDate = $existing_entity->getCreated();
+                    $createdBy = $existing_entity->getCreatedBy();
+
+                    $existing_entity = $member;
+
+                    // Set the created date and created by of the existing entity (Should be same as the one we are trying to update)
+                    $existing_entity->setCreated($createDate);
+                    $existing_entity->setCreatedBy($createdBy);
+
+                    $nbEntitiesUpdated = $nbEntitiesUpdated + 1;
+
+                    continue;
+                }
+
+                $errorMessageTemplate = $error->getMessage();
+                $errorMessage = str_replace('{{ label }}', $propertyPath, $errorMessageTemplate);
+                $errorMessage = str_replace('This value', "The '".$propertyPath."' value", $errorMessageTemplate);
+
+                array_push($entityValidationErrors, [
+                    'Row #' => $rowkey,
+                    'First Name' => $member->getFirstName() ?? '',
+                    'Last Name' => $member->getLastName() ?? '',
+                    'Telephone 1' => $member->getTelephone1() ?? '',
+                    'Telephone 2' => $member->getTelephone2() ?? '',
+                    'Address' => $member->getAddress() ?? '',
+                    'Section' => $member->getSection() ?? '',
+                    'Error message' => $errorMessage,
+                ]);
+            }
+
             if (($rowkey % DB_INSERT_BATCH_SIZE) === 0) {
                 $em->flush();
                 $em->clear(); // Detaches all objects from Doctrine!
@@ -185,7 +242,9 @@ class ImportMemberController extends AbstractController
 
         $redirectUrl = $this->adminUrlGenerator
             ->setRoute('app_members_importmembers_showresults', [
-                'nbMembersCreated' => $worksheetRowsToLoad,
+                'created' => $nbEntitiesCreated,
+                'updated' => $nbEntitiesUpdated,
+                'errors' => $entityValidationErrors,
             ])
             ->generateUrl()
             ;
@@ -196,10 +255,14 @@ class ImportMemberController extends AbstractController
     #[Route('/admin/showimportedmembersresults', name: 'app_members_importmembers_showresults')]
     public function showImportResultsAction(Request $request)
     {
-        $nbMembersCreated = $request->query->all()['routeParams']['nbMembersCreated'];
+        $created = $request->query->all()['routeParams']['created'];
+        $updated = $request->query->all()['routeParams']['updated'];
+        $errors = $request->query->all()['routeParams']['errors'];
 
         return $this->render('import_members/result.html.twig', [
-            'nbMembersCreated' => $nbMembersCreated,
+            'created' => $created,
+            'updated' => $updated,
+            'errors' => $errors,
             'page_name' => 'Member import',
         ]);
     }

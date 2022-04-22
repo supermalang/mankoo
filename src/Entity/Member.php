@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\MemberRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: MemberRepository::class)]
 #[UniqueEntity(
@@ -27,6 +28,7 @@ class Member
     private $id;
 
     #[ORM\Column(type: 'string', length: 30)]
+    #[Assert\NotBlank]
     private $firstName;
 
     #[ORM\Column(type: 'string', length: 20, nullable: true)]

@@ -6,18 +6,39 @@ use App\Entity\Member;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\Request;
 
 class MemberCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string
     {
         return Member::class;
+    }
+
+    public function configureResponseParameters(KeyValueStore $responseParameters): KeyValueStore
+    {
+        if (Crud::PAGE_INDEX === $responseParameters->get('pageName')) {
+            $request = Request::createFromGlobals();
+            $importedFile = $request->query->get('todelete');
+
+            if ($importedFile) {
+                $uploadedMemberFileDir = $this->getParameter('importmembers_directory');
+                $importedfile_fullpath = $uploadedMemberFileDir.'/'.$importedFile;
+
+                $filesystem = new Filesystem();
+                $filesystem->remove($importedfile_fullpath);
+            }
+        }
+
+        return $responseParameters;
     }
 
     public function configureActions(Actions $actions): Actions

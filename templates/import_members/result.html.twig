@@ -4,8 +4,45 @@
 
 {% block main %}
     <div class='bg-body p-5 rounded shadow'>
-        <p class='fs-4'><i class="fa-solid fa-check text-success"></i> {{nbMembersCreated}} members imported</p>
-        <p>Members Updated</p>
-    </div>
-{% endblock %}
+        <p class='fs-4'><i class="fa-solid fa-check text-success"></i> {{created}} members created</p>
+        <p class='fs-4'><i class="fa-solid fa-check text-success"></i> {{updated}} members updated</p>
 
+        {% if errors|length >= 1 %}
+            <p class='fs-4 text-danger'><i class="fa-solid fa-triangle-exclamation "></i> {{errors|length}} {{errors|length <= 1 ? 'error' : 'errors' }}</p>
+        {% endif %}
+    </div>
+
+    {% if errors|length >= 1 %}
+        <div class='mt-5 mb-4'>
+            <p class='fs-5 text-primary '>We have encountered errors in <span class='text-danger'>{{errors|length}} {{errors|length <= 1 ? 'row' : 'rows' }}</span> listed below. Please update accordingly and upload again.</p>
+        </div>
+
+        <table class="table table-striped table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th class="col text-center">#</th>
+                    <th class="col">First Name</th>
+                    <th class="col">Last Name</th>
+                    <th class="col">Telephone 1</th>
+                    <th class="col">Telephone 2</th>
+                    <th class="col">Address</th>
+                    <th class="col">Section</th>
+                    <th class="col text-danger">Error</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in errors %}
+                    <tr>
+                    {% for col in row %}
+                        {% if loop.last != true %}
+                            <td class='fs-5'>{{col}}</td>
+                        {% else %}
+                            <td class="fs-5 text-danger fst-italic">{{col}}</td>
+                        {% endif %}
+                    {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}
