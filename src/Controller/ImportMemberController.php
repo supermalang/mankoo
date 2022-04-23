@@ -195,9 +195,10 @@ class ImportMemberController extends AbstractController
                 $propertyPath = $error->getPropertyPath();
 
                 // Check if the error is happening because of an entity that already exists (unique constraint, etc.)
-                $existing_entity = $em->getRepository(Member::class)->findOneBy([$propertyPath => $error->getInvalidValue()]);
+                // We skip this check if the $propertyPath is 'telephone2' because it is not a mandatory unique field
+                $existing_entity = 'telephone2' === $propertyPath ? null : $em->getRepository(Member::class)->findOneBy([$propertyPath => $error->getInvalidValue()]);
 
-                // The entity already exists, so we need to update the existing entity
+                // The entity already exists, so we need to update it
                 if ($existing_entity && !null == $error->getInvalidValue()) {
                     $createDate = $existing_entity->getCreated();
                     $createdBy = $existing_entity->getCreatedBy();
@@ -208,25 +209,51 @@ class ImportMemberController extends AbstractController
                     $existing_entity->setCreated($createDate);
                     $existing_entity->setCreatedBy($createdBy);
 
+                    // Set the updated date and updated by of the existing entity
+                    $existing_entity->setUpdated(new \DateTimeImmutable());
+                    $existing_entity->setUpdatedBy($this->security->getUser());
+
                     $nbEntitiesUpdated = $nbEntitiesUpdated + 1;
 
                     continue;
                 }
 
-                $errorMessageTemplate = $error->getMessage();
-                $errorMessage = str_replace('{{ label }}', $propertyPath, $errorMessageTemplate);
-                $errorMessage = str_replace('This value', "The '".$propertyPath."' value", $errorMessageTemplate);
+                // The entity does not exist, so we need to add it to the array of errors
 
-                array_push($entityValidationErrors, [
-                    'Row #' => $rowkey,
-                    'First Name' => $member->getFirstName() ?? '',
-                    'Last Name' => $member->getLastName() ?? '',
-                    'Telephone 1' => $member->getTelephone1() ?? '',
-                    'Telephone 2' => $member->getTelephone2() ?? '',
-                    'Address' => $member->getAddress() ?? '',
-                    'Section' => $member->getSection() ?? '',
-                    'Error message' => $errorMessage,
-                ]);
+                $errorMessageTemplate = $error->getMessage();
+                $errorMessage = str_replace(
+                    ['{{ value }}', '{{ label }}', 'This value', '{{ invalidValue }}'],
+                    [$error->getInvalidValue(), "'".$error->getPropertyPath()."'", "The '".$propertyPath."' value", $error->getInvalidValue()],
+                    $errorMessageTemplate
+                );
+
+                // last array
+                $lastErrorRow = $entityValidationErrors[array_key_last($entityValidationErrors)]['Row #'] ?? null;
+
+                if ($lastErrorRow === $rowkey) {
+                    $errorMessage_ = $entityValidationErrors[array_key_last($entityValidationErrors)]['Error message'];
+
+                    // if $errorMessage_ contains <li>
+                    if (false !== strpos($errorMessage_, '<li>')) {
+                        $errorMessage_ .= '<li>'.$errorMessage.'</li>';
+                        $errorMessage_ = '<ul>'.str_replace(['<ul>', '</ul>'], '', $errorMessage_).'</ul>';
+                    } else {
+                        $errorMessage_ = '<ul><li>'.$errorMessage_.'</li><li>'.$errorMessage.'</li></ul>';
+                    }
+
+                    $entityValidationErrors[array_key_last($entityValidationErrors)]['Error message'] = $errorMessage_;
+                } else {
+                    array_push($entityValidationErrors, [
+                        'Row #' => $rowkey,
+                        'First Name' => $member->getFirstName() ?? '',
+                        'Last Name' => $member->getLastName() ?? '',
+                        'Telephone 1' => $member->getTelephone1() ?? '',
+                        'Telephone 2' => $member->getTelephone2() ?? '',
+                        'Address' => $member->getAddress() ?? '',
+                        'Section' => $member->getSection() ?? '',
+                        'Error message' => $errorMessage,
+                    ]);
+                }
             }
 
             if (($rowkey % DB_INSERT_BATCH_SIZE) === 0) {
@@ -257,7 +284,7 @@ class ImportMemberController extends AbstractController
     {
         $created = $request->query->all()['routeParams']['created'];
         $updated = $request->query->all()['routeParams']['updated'];
-        $errors = $request->query->all()['routeParams']['errors'];
+        $errors = $request->query->all()['routeParams']['errors'] ?? [];
 
         return $this->render('import_members/result.html.twig', [
             'created' => $created,

@@ -29,15 +29,30 @@ class Member
 
     #[ORM\Column(type: 'string', length: 30)]
     #[Assert\NotBlank]
+    #[Assert\Length(
+        min: 2,
+        max: 30,
+        minMessage: 'The {{ label }} must be at least {{ limit }} characters long',
+        maxMessage: 'The {{ label }} cannot be longer than {{ limit }} characters',
+    )]
     private $firstName;
 
     #[ORM\Column(type: 'string', length: 20, nullable: true)]
     private $lastName;
 
-    #[ORM\Column(type: 'string', length: 20, nullable: true)]
+    #[ORM\Column(type: 'string', length: 20)]
+    #[Assert\NotBlank]
+    #[Assert\Regex(
+        pattern: '/^((\+|0{2})[1-9]\d{1,2})?\s?\d{6,11}$/',
+        message: '{{ value }} is not a valid {{ label }}. It should only contain country code and telephone number without any spaces.',
+    )]
     private $telephone1;
 
     #[ORM\Column(type: 'string', length: 15, nullable: true)]
+    #[Assert\Regex(
+        pattern: '/^((\+|0{2})[1-9]\d{1,2})?\s?\d{6,11}$/',
+        message: '{{ value }} is not a valid {{ label }}. It should only contain country code and telephone number without any spaces.',
+    )]
     private $telephone2;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
